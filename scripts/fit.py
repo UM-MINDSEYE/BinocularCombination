@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
-data = pd.read_csv("./simulation/simulated_right_dominant.csv")
+data = pd.read_csv("../data/baseline_full_data_2026-04-29_15-48.csv")
 
 mean_phases = []
 unique_ratios = sorted(data['ratio'].unique())
@@ -29,6 +29,29 @@ popt, pcov = curve_fit(model_func, x_data, y_data, p0=[1.0, 1.5])
 alpha_fit, gamma_fit = popt
 alpha_db = 20 * np.log10(alpha_fit)
 print(f"Alpha (dB): {alpha_db:.2f} dB | Gamma: {gamma_fit:.3f}")
+
+### 
+def alpha_from_db(alpha_db):
+    return 10**(alpha_db / 20.0)
+    
+def contrasts_sum_to_1(alpha, total=1.0):
+    C_right = total / (1.0 + alpha) 
+    C_left = total * alpha / (1.0 + alpha) 
+    return C_left, C_right
+    
+def contrasts(alpha):
+    if alpha >= 1:  # left eye stronger
+        C_left = 1.0
+        C_right = 1.0 / alpha
+    else:  # right eye stronger
+        C_right = 1.0
+        C_left = alpha
+    return C_left, C_right
+
+alpha = alpha_from_db(alpha_db) 
+left, right = contrasts(alpha) 
+print(f"left {left}, right {right}")
+### 
 
 x_smooth_ratio = np.logspace(-1, 1, 500)
 y_smooth = model_func(x_smooth_ratio, alpha_fit, gamma_fit)
